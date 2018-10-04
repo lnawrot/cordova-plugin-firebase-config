@@ -5,18 +5,17 @@
 
 - (void)pluginInitialize {
     NSLog(@"Starting Firebase Remote Config plugin");
+}
 
+- (void)init:(CDVInvokedUrlCommand *)command {
     if(![FIRApp defaultApp]) {
         [FIRApp configure];
     }
 
     self.remoteConfig = [FIRRemoteConfig remoteConfig];
-
-    NSString* plistFilename = [self.commandDelegate.settings objectForKey:[@"FirebaseRemoteConfigDefaults" lowercaseString]];
-    if (plistFilename) {
-        [self.remoteConfig setDefaultsFromPlistFileName:plistFilename];
-    }
+    [self.remoteConfig setDefaults:command];
 }
+
 
 - (void)update:(CDVInvokedUrlCommand *)command {
     NSNumber* ttlSeconds = [command argumentAtIndex:0];

@@ -17,6 +17,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigValue;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
+import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -30,18 +31,15 @@ public class FirebaseConfigPlugin extends ReflectiveCordovaPlugin {
     protected void pluginInitialize() {
         Log.d(TAG, "Starting Firebase Remote Config plugin");
 
-        this.firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+    }
 
-        String filename = preferences.getString("FirebaseRemoteConfigDefaults", "");
-        if (filename.isEmpty()) {
-            // always call setDefaults in order to avoid exception
-            // https://github.com/firebase/quickstart-android/issues/291
-            this.firebaseRemoteConfig.setDefaults(Collections.<String, Object>emptyMap());
-        } else {
-            Context ctx = cordova.getActivity().getApplicationContext();
-            int resourceId = ctx.getResources().getIdentifier(filename, "xml", ctx.getPackageName());
-            this.firebaseRemoteConfig.setDefaults(resourceId);
-        }
+    @CordovaMethod
+    protected void init(final JSONObject defaultsJson, final CallbackContext callbackContext) {
+        Log.d(TAG, "init");
+
+        this.firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        this.firebaseRemoteConfig.setDefaults(toMap(defaultsJson));
+        callbackContext.success();
     }
 
     @CordovaMethod
@@ -102,5 +100,34 @@ public class FirebaseConfigPlugin extends ReflectiveCordovaPlugin {
         } else {
             return this.firebaseRemoteConfig.getValue(key, namespace);
         }
+    }
+
+    private static Map<String, Object> toMap(JSONObject jsonobj)  throws JSONException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        Iterator<String> keys = jsonobj.keys();
+        while(keys.hasNext()) {
+            String key = keys.next();
+            Object value = jsonobj.get(key);
+            if (value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            } else if (value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            map.put(key, value);
+        }   return map;
+    }
+
+    private static List<Object> toList(JSONArray array) throws JSONException {
+        List<Object> list = new ArrayList<Object>();
+        for(int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+            else if (value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            list.add(value);
+        }   return list;
     }
 }

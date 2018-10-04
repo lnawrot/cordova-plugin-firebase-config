@@ -8,6 +8,11 @@ function promiseParameter(type, key, namespace) {
 }
 
 module.exports = {
+    init: function(defaultValues) {
+        return new Promise(function(resolve, reject) {
+            exec(resolve, reject, PLUGIN_NAME, "init", defaultValues);
+        });
+    },
     update: function(ttlSeconds) {
         return new Promise(function(resolve, reject) {
             exec(resolve, reject, PLUGIN_NAME, "update", [ttlSeconds || 0]);
