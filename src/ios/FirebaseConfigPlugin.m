@@ -13,7 +13,8 @@
     }
 
     self.remoteConfig = [FIRRemoteConfig remoteConfig];
-    [self.remoteConfig setDefaults:command];
+    NSDictionary* defaults = [command argumentAtIndex:0];
+    [self.remoteConfig setDefaults:defaults];
 }
 
 
