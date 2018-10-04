@@ -43,8 +43,12 @@ public class FirebaseConfigPlugin extends ReflectiveCordovaPlugin {
         Log.d(TAG, "init");
 
         this.firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-        this.firebaseRemoteConfig.setDefaults(toMap(defaultsJson));
-        callbackContext.success();
+        try {
+            this.firebaseRemoteConfig.setDefaults(toMap(defaultsJson));
+            callbackContext.success();
+        } catch (JSONException error) {
+            callbackContext.error("Parsing error.");
+        }
     }
 
     @CordovaMethod
