@@ -16,6 +16,8 @@
     self.remoteConfig = [FIRRemoteConfig remoteConfig];
     NSDictionary* defaults = [command argumentAtIndex:0];
     [self.remoteConfig setDefaults:defaults];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     NSLog(@"[FIREBASE][REMOTE] initialized");
 }
 
