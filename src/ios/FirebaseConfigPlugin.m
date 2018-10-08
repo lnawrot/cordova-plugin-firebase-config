@@ -4,10 +4,11 @@
 @implementation FirebaseConfigPlugin
 
 - (void)pluginInitialize {
-    NSLog(@"Starting Firebase Remote Config plugin");
+    NSLog(@"[FIREBASE][REMOTE] pluginInitialize");
 }
 
 - (void)init:(CDVInvokedUrlCommand *)command {
+    NSLog(@"[FIREBASE][REMOTE] init");
     if(![FIRApp defaultApp]) {
         [FIRApp configure];
     }
@@ -15,10 +16,12 @@
     self.remoteConfig = [FIRRemoteConfig remoteConfig];
     NSDictionary* defaults = [command argumentAtIndex:0];
     [self.remoteConfig setDefaults:defaults];
+    NSLog(@"[FIREBASE][REMOTE] initialized");
 }
 
 
 - (void)update:(CDVInvokedUrlCommand *)command {
+    NSLog(@"[FIREBASE][REMOTE] update");
     NSNumber* ttlSeconds = [command argumentAtIndex:0];
     long expirationDuration = [ttlSeconds longValue];
 
@@ -42,6 +45,7 @@
 }
 
 - (void)getString:(CDVInvokedUrlCommand *)command {
+    NSLog(@"[FIREBASE][REMOTE] getString");
     FIRRemoteConfigValue *configValue = [self getConfigValue:command];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                                       messageAsString:configValue.stringValue];
