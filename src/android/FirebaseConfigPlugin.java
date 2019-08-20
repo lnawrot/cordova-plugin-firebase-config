@@ -2,7 +2,6 @@ package by.chemerisuk.cordova.firebase;
 
 import java.util.Collections;
 
-import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
@@ -12,7 +11,6 @@ import by.chemerisuk.cordova.support.ReflectiveCordovaPlugin;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigValue;
 
 import org.apache.cordova.CallbackContext;
@@ -28,7 +26,7 @@ import java.util.Iterator;
 
 
 public class FirebaseConfigPlugin extends ReflectiveCordovaPlugin {
-    private static final String TAG = "FirebaseRemoteConfigPlugin";
+    private static final String TAG = "FirebaseConfigPlugin";
 
     private FirebaseRemoteConfig firebaseRemoteConfig;
 
@@ -52,63 +50,76 @@ public class FirebaseConfigPlugin extends ReflectiveCordovaPlugin {
     }
 
     @CordovaMethod
-    protected void update(long ttlSeconds, final CallbackContext callbackContext) {
-        if (ttlSeconds == 0) {
-            // App should use developer mode to fetch values from the service
-            this.firebaseRemoteConfig.setConfigSettings(
-                new FirebaseRemoteConfigSettings.Builder()
-                    .setDeveloperModeEnabled(true)
-                    .build()
-            );
-        }
-
-        this.firebaseRemoteConfig.fetch(ttlSeconds)
-            .addOnCompleteListener(cordova.getActivity(), new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(Task<Void> task) {
-                    if (task.isSuccessful()) {
-                        firebaseRemoteConfig.activateFetched();
-
-                        callbackContext.success();
-                    } else {
-                        callbackContext.error(task.getException().getMessage());
+    protected void update(long expirationDuration, final CallbackContext callbackContext) {
+        this.firebaseRemoteConfig.fetch(expirationDuration)
+                .addOnCompleteListener(cordova.getActivity(), new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            callbackContext.success();
+                        } else {
+                            callbackContext.error(task.getException().getMessage());
+                        }
                     }
-                }
-            });
+                });
     }
 
     @CordovaMethod
-    protected void getBoolean(String key, String namespace, CallbackContext callbackContext) {
-        boolean value = getValue(key, namespace).asBoolean();
+    protected void activate(final CallbackContext callbackContext) {
+        this.firebaseRemoteConfig.activate()
+                .addOnCompleteListener(cordova.getActivity(), new OnCompleteListener<Boolean>() {
+                    @Override
+                    public void onComplete(Task<Boolean> task) {
+                        if (task.isSuccessful()) {
+                            callbackContext.sendPluginResult(
+                                    new PluginResult(PluginResult.Status.OK, task.getResult()));
+                        } else {
+                            callbackContext.error(task.getException().getMessage());
+                        }
+                    }
+                });
+    }
 
+    @CordovaMethod
+    protected void fetchAndActivate(final CallbackContext callbackContext) {
+        this.firebaseRemoteConfig.fetchAndActivate()
+                .addOnCompleteListener(cordova.getActivity(), new OnCompleteListener<Boolean>() {
+                    @Override
+                    public void onComplete(Task<Boolean> task) {
+                        if (task.isSuccessful()) {
+                            callbackContext.sendPluginResult(
+                                    new PluginResult(PluginResult.Status.OK, task.getResult()));
+                        } else {
+                            callbackContext.error(task.getException().getMessage());
+                        }
+                    }
+                });
+    }
+
+    @CordovaMethod
+    protected void getBoolean(String key, CallbackContext callbackContext) {
         callbackContext.sendPluginResult(
-            new PluginResult(PluginResult.Status.OK, value));
+                new PluginResult(PluginResult.Status.OK, getValue(key).asBoolean()));
     }
 
     @CordovaMethod
-    protected void getBytes(String key, String namespace, CallbackContext callbackContext) {
-        callbackContext.success(getValue(key, namespace).asByteArray());
+    protected void getBytes(String key, CallbackContext callbackContext) {
+        callbackContext.success(getValue(key).asByteArray());
     }
 
     @CordovaMethod
-    protected void getNumber(String key, String namespace, CallbackContext callbackContext) {
-        double value = getValue(key, namespace).asDouble();
-
+    protected void getNumber(String key, CallbackContext callbackContext) {
         callbackContext.sendPluginResult(
-            new PluginResult(PluginResult.Status.OK, (float)value));
+                new PluginResult(PluginResult.Status.OK, (float)getValue(key).asDouble()));
     }
 
     @CordovaMethod
-    protected void getString(String key, String namespace, CallbackContext callbackContext) {
-        callbackContext.success(getValue(key, namespace).asString());
+    protected void getString(String key, CallbackContext callbackContext) {
+        callbackContext.success(getValue(key).asString());
     }
 
-    private FirebaseRemoteConfigValue getValue(String key, String namespace) {
-        if (namespace.isEmpty()) {
-            return this.firebaseRemoteConfig.getValue(key);
-        } else {
-            return this.firebaseRemoteConfig.getValue(key, namespace);
-        }
+    private FirebaseRemoteConfigValue getValue(String key) {
+        return this.firebaseRemoteConfig.getValue(key);
     }
 
     private static Map<String, Object> toMap(JSONObject jsonobj)  throws JSONException {

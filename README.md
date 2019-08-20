@@ -1,16 +1,31 @@
-# cordova-plugin-firebase-config<br>[![NPM version][npm-version]][npm-url] [![NPM downloads][npm-downloads]][npm-url]
-> Cordova plugin for [Firebase Remote Config](https://firebase.google.com/docs/remote-config/)
+# Cordova plugin for [Firebase Remote Config](https://firebase.google.com/docs/remote-config/)
 
-## Installation
+[![NPM version][npm-version]][npm-url] [![NPM downloads][npm-downloads]][npm-url] [![Twitter][twitter-follow]][twitter-url]
 
-    cordova plugin add cordova-plugin-firebase-config --save
+| [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)][donate-url] | Your help is appreciated. Create a PR, submit a bug or just grab me :beer: |
+|-|-|
 
-Use variable `FIREBASE_CONFIG_VERSION` to override dependency version on Android.
+## Index
+
+<!-- MarkdownTOC levels="2" autolink="true" -->
+
+- [Supported Platforms](#supported-platforms)
+- [Installation](#installation)
+- [Preferences](#preferences)
+- [Methods](#methods)
+
+<!-- /MarkdownTOC -->
 
 ## Supported Platforms
 
 - iOS
 - Android
+
+## Installation
+
+    $ cordova plugin add cordova-plugin-firebase-config
+
+Use variable `FIREBASE_CONFIG_VERSION` and `FIREBASE_CORE_VERSION` to override dependency version on Android.
 
 ## Preferences
 You can specify `FirebaseRemoteConfigDefaults` in `config.xml` to define filename of a file with default values.
@@ -47,38 +62,52 @@ On iOS file the file is located at `platforms/ios/<Your App Name>/${filename}.pl
 ## Methods
 Every method call returns a promise which is optionally fulfilled with an appropriate value.
 
-_Namespace_ argument is optional.
-
-### update(_ttlSeconds_)
-Fetches remote config values with appropriate TTL and then activates them.
+### fetch(_expirationDuration_)
+Starts fetching configs, adhering to the specified minimum fetch interval.
 ```js
-cordova.plugins.firebase.config.update(8 * 3600).then(function() {
-    // your config was updated
+cordova.plugins.firebase.config.fetch(8 * 3600).then(function() {
+    // your config was fetched
 });
 ```
 
-### getBoolean(_key_, _namespace_)
+### activate()
+Asynchronously activates the most recently fetched configs, so that the fetched key value pairs take effect.
+```js
+cordova.plugins.firebase.config.activate().then(function() {
+    // your config was activated
+});
+```
+
+### fetchAndActivate()
+Asynchronously fetches and then activates the fetched configs.
+```js
+cordova.plugins.firebase.config.fetchAndActivate().then(function() {
+    // your config was fetched and activated
+});
+```
+
+### getBoolean(_key_)
 ```js
 cordova.plugins.firebase.config.getBoolean("myBool").then(function(value) {
     // use value from remote config
 });
 ```
 
-### getString(_key_, _namespace_)
+### getString(_key_)
 ```js
 cordova.plugins.firebase.config.getString("myStr").then(function(value) {
     // use value from remote config
 });
 ```
 
-### getNumber(_key_, _namespace_)
+### getNumber(_key_)
 ```js
 cordova.plugins.firebase.config.getNumber("myNumber").then(function(value) {
     // use value from remote config
 });
 ```
 
-### getBytes(_key_, _namespace_)
+### getBytes(_key_)
 ```js
 cordova.plugins.firebase.config.getBytes("myByteArray").then(function(value) {
     // use value from remote config
@@ -88,3 +117,7 @@ cordova.plugins.firebase.config.getBytes("myByteArray").then(function(value) {
 [npm-url]: https://www.npmjs.com/package/cordova-plugin-firebase-config
 [npm-version]: https://img.shields.io/npm/v/cordova-plugin-firebase-config.svg
 [npm-downloads]: https://img.shields.io/npm/dm/cordova-plugin-firebase-config.svg
+[twitter-url]: https://twitter.com/chemerisuk
+[twitter-follow]: https://img.shields.io/twitter/follow/chemerisuk.svg?style=social&label=Follow%20me
+[donate-url]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=YYRKVZJSHLTNC&source=url
+

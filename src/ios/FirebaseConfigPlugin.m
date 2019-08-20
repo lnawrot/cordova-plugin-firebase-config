@@ -21,27 +21,45 @@
     NSLog(@"[FIREBASE][REMOTE] initialized");
 }
 
-
 - (void)update:(CDVInvokedUrlCommand *)command {
     NSLog(@"[FIREBASE][REMOTE] update");
     NSNumber* ttlSeconds = [command argumentAtIndex:0];
     long expirationDuration = [ttlSeconds longValue];
 
-    if (expirationDuration == 0) {
-        self.remoteConfig.configSettings = [[FIRRemoteConfigSettings alloc] initWithDeveloperModeEnabled:YES];
-    }
-
-    [self.remoteConfig fetchWithExpirationDuration:expirationDuration completionHandler:^(FIRRemoteConfigFetchStatus status, NSError *error) {
+    [self.remoteConfig fetchWithExpirationDuration:expirationDuration completionHandler:^(FIRRemoteConfigFetchStatus status, NSError *err) {
         CDVPluginResult *pluginResult = nil;
-
-        if (status == FIRRemoteConfigFetchStatusSuccess) {
-            [self.remoteConfig activateFetched];
-
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        if (err) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:err.localizedDescription];
         } else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         }
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
 
+- (void)activate:(CDVInvokedUrlCommand *)command {
+    BOOL wasActivated = self.remoteConfig.lastFetchStatus == FIRRemoteConfigFetchAndActivateStatusSuccessFetchedFromRemote;
+    [self.remoteConfig activateWithCompletionHandler:^(NSError * _Nullable err) {
+        CDVPluginResult *pluginResult = nil;
+        if (err) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:err.localizedDescription];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:
+                            (!wasActivated && self.remoteConfig.lastFetchStatus == FIRRemoteConfigFetchAndActivateStatusSuccessFetchedFromRemote)];
+        }
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
+
+- (void)fetchAndActivate:(CDVInvokedUrlCommand *)command {
+    [self.remoteConfig fetchAndActivateWithCompletionHandler:^(FIRRemoteConfigFetchAndActivateStatus status, NSError * _Nullable err) {
+        CDVPluginResult *pluginResult = nil;
+        if (err) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:err.localizedDescription];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:
+                            (status == FIRRemoteConfigFetchAndActivateStatusSuccessFetchedFromRemote)];
+        }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
 }
@@ -81,13 +99,8 @@
 
 - (FIRRemoteConfigValue*)getConfigValue:(CDVInvokedUrlCommand *)command {
     NSString* key = [command argumentAtIndex:0];
-    NSString* namespace = [command argumentAtIndex:1];
 
-    if ([namespace length] == 0) {
-        return [self.remoteConfig configValueForKey:key];
-    } else {
-        return [self.remoteConfig configValueForKey:key namespace:namespace];
-    }
+    return [self.remoteConfig configValueForKey:key];
 }
 
 
